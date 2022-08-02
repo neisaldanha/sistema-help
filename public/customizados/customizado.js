@@ -1,5 +1,7 @@
 // Mostra imagem ao clicar
 
+//import { css } from "laravel-mix";
+
 $(function () {
     $(document).on('click', '[data-toggle="lightbox"]', function(event) {
       event.preventDefault();
@@ -389,10 +391,23 @@ $(function(){
         });
     });
 });  
+	
 
-	
-	
-	
+$(function () {
+
+   $("#change-colors").on('click',function invertColors(){
+       $(this).find("i").toggleClass("fa-toggle-on");
+       $("body").toggleClass("inverter");
+       $("img, figure, iframe, .photoset, .pxu-photo").toggleClass("inverter");
+       $("figure").find("img").addClass("naoinverter");
+       $(".photoset").find("figure").addClass("naoinverter");
+   });
+
+
+})
+
+
+
 	const show = id => {
 	 	const dialog = document.getElementById(id);
 		//dialogPolyfill.registerDialog(dialog);

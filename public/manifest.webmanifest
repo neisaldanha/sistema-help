@@ -1,0 +1,33 @@
+{
+  "background_color": "#2bb9ad",
+  "description": "Mostra tela inicial do APP",
+  "display": "fullscreen",
+  "icons": [
+    {
+      "src": "imagens/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  
+    "/js/addtohomescreen.min.js.js": "/js/addtohomescreen.min.js",
+    "/css/addtohomescreen.css": "/css/addtohomescreen.css",
+  "main": [
+    "js/addtohomescreen.min.js",
+    "css/addtohomescreen.css"
+  ],
+  "keywords": [
+    "iPhone",
+    "iPod",
+    "iPad",
+    "iOS6",
+    "iOS7",
+    "android",
+    "mobile"
+  ],
+  "license": "MIT",
+  "name": "APP FACISB",
+  "short_name": "HELP",
+  "id": "/help/public/index.php",
+  "start_url": "/help/public/index.php"
+}

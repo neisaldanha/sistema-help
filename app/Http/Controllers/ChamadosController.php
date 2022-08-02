@@ -17,12 +17,14 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\SendMail;
+use App\Models\Models\Tab_reabertura_chamado_logs as ModelsTab_reabertura_chamado_logs;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 use App\Models\Tab_demandas;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Models\Tab_departamentos;
 use App\Models\tab_visu_chamados;
+use App\Models\tab_reabertura_chamado_logs;
 
 class ChamadosController extends Controller
 {
@@ -46,7 +48,7 @@ class ChamadosController extends Controller
         ->leftJoin('tab_pessoas as P','P.ID_PESSOA','C.ID_ATENDENTE')
         ->leftJoin('tab_demandas as DE','DE.id_demanda','C.TITULO')
         ->select('C.ID_DPTO','D.DESCRICAO AS DEPARTAMENTO','C.NM_CHAMADO',
-        		'C.ID_CHAMADO','C.TITULO','DE.d_descricao','C.DESCRICAO','C.DATA_ABERTURA',
+        		'C.ID_CHAMADO','C.TITULO','DE.d_descricao','C.DESCRICAO','C.DATA_ABERTURA','ID_ATENDENTE',
         		'C.STATUS','U.USU_LOGIN','P.PESSOA_NOME','C.PRIORIDADE','C.VIEW','C.PRINT')
         ->orderBy('C.DATA_ABERTURA','ASC')
         ->get();
@@ -58,7 +60,7 @@ class ChamadosController extends Controller
         ->leftJoin('tab_demandas as DE','DE.id_demanda','C.TITULO')
         ->where('C.ID_USUARIO',$id)
         ->select('C.ID_DPTO','D.DESCRICAO AS DEPARTAMENTO','C.NM_CHAMADO',
-        		'C.ID_CHAMADO','C.TITULO','DE.d_descricao','C.DESCRICAO','C.DATA_ABERTURA',
+        		'C.ID_CHAMADO','C.TITULO','DE.d_descricao','C.DESCRICAO','C.DATA_ABERTURA','ID_ATENDENTE',
         		'C.STATUS','U.USU_LOGIN','P.PESSOA_NOME','C.PRIORIDADE','C.VIEW','C.PRINT')
         ->orderBy('C.DATA_ABERTURA','ASC')
         ->get();
@@ -107,7 +109,7 @@ class ChamadosController extends Controller
         $data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
         $dpto = Arr::pluck($data,'ID_DPTO')[0];
         $nivel =  Arr::pluck($data,'USU_NIVEL')[0];
-        
+        $id =  Arr::pluck($data,'ID_PESSOA')[0];
         
         $chamados = DB::table('tab_chamados as C')
         ->join('tab_usuarios as U','C.ID_USUARIO','U.ID_PESSOA')
@@ -116,13 +118,32 @@ class ChamadosController extends Controller
         ->leftJoin('tab_demandas as DE','DE.id_demanda','C.TITULO')
         ->where('C.ID_DPTO',$dpto)
         ->where('C.STATUS','<>','F')
-        ->select('C.ID_DPTO','D.DESCRICAO AS DEPARTAMENTO','C.NM_CHAMADO','C.ID_CHAMADO',
+        ->select('C.ID_DPTO','D.DESCRICAO AS DEPARTAMENTO','C.NM_CHAMADO','C.ID_CHAMADO','ID_ATENDENTE',
+        		'C.TITULO','C.DESCRICAO','DE.d_descricao','C.DATA_ABERTURA','C.STATUS','U.USU_LOGIN',
+        		'P.PESSOA_NOME','C.PRIORIDADE','C.VIEW','C.PRINT')
+         ->orderBy('C.DATA_ABERTURA')
+        ->get();
+
+        $gabriel = DB::table('tab_chamados as C')
+        ->join('tab_usuarios as U','C.ID_USUARIO','U.ID_PESSOA')
+        ->leftjoin('tab_departamentos as D','C.ID_DPTO','D.ID_DPTO')
+        ->leftJoin('tab_pessoas as P','P.ID_PESSOA','C.ID_ATENDENTE')
+        ->leftJoin('tab_demandas as DE','DE.id_demanda','C.TITULO')
+        ->whereIn('C.ID_DPTO',[1,7,8])
+        ->where('C.STATUS','<>','F')
+        ->select('C.ID_DPTO','D.DESCRICAO AS DEPARTAMENTO','C.NM_CHAMADO','C.ID_CHAMADO','ID_ATENDENTE',
         		'C.TITULO','C.DESCRICAO','DE.d_descricao','C.DATA_ABERTURA','C.STATUS','U.USU_LOGIN',
         		'P.PESSOA_NOME','C.PRIORIDADE','C.VIEW','C.PRINT')
          ->orderBy('C.DATA_ABERTURA')
         ->get();
        
-        //dd($chamados);
+        //dd($gabriel);
+
+        if($dpto == 19){
+            $chamadosDpto = $gabriel;
+        }else{
+            $chamadosDpto = $chamados;
+        }
         
         $inter = DB::table('tab_interacao_chamados as I')
         ->join('tab_chamados as C','C.ID_CHAMADO', 'I.ID_CHAMADO')
@@ -138,7 +159,7 @@ class ChamadosController extends Controller
             ->get();
         $dptos = DB::table('tab_departamentos')->get();
         return view('painel/lista-chamados-dpto')->with([
-            'chamados'=>$chamados,
+            'chamados'=>$chamadosDpto,
             'imgs'=>$imgs,
             'int'=>$inter,
             'data' => Arr::pluck($data,'USU_LOGIN'),
@@ -196,7 +217,7 @@ class ChamadosController extends Controller
 
         $nomes = [
             'demanda'=>'Demanda',
-            'descricao'=>'Descrição',
+            'descricao'=>'DescriÃ§Ã£o',
             
         ];
 
@@ -275,7 +296,7 @@ class ChamadosController extends Controller
         $toemail = Arr::pluck($pessoa,'EMAIL');
         $copyemail = Arr::pluck($data,'EMAIL')[0];
        
-        dd($toemail,$copyemail);
+        //dd($toemail,$copyemail);
 
             Mail::to($toemail)
             ->cc($copyemail)
@@ -284,7 +305,7 @@ class ChamadosController extends Controller
         if($save){
             Session::flash('success', true);
             return back()->with([
-                'success','Usuário cadastrado com sucesso',
+                'success','UsuÃ¡rio cadastrado com sucesso',
                 'data'=> Arr::pluck($data,'USU_LOGIN'),
                 'iduser'=>Arr::pluck($data,'ID_USUARIO'),
                 'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
@@ -345,13 +366,14 @@ class ChamadosController extends Controller
         $chamado->ID_ATENDENTE = (int)$idusuario[0];
         $chamado->STATUS = 'E';
         $chamado->VIEW = 'S';
+        $chamado->DATA_ATENDIMENTO = date('Y-m-d H:i:s');
 
         $update = $chamado->update();
 
         if($update){
             Session::flash('success', true);
             return back()->with([
-                'success','Interação cadastrada com sucesso',
+                'success','InteraÃ§Ã£o cadastrada com sucesso',
                 'data'=> Arr::pluck($data,'USU_LOGIN'),
                 'iduser'=>Arr::pluck($data,'ID_USUARIO'),
                 'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
@@ -454,32 +476,48 @@ class ChamadosController extends Controller
         //$save2 = $idchamado->update();
         
         $dpto = $request->dpto;
+        $chamado = Tab_chamados::findOrFail($id);
+
+        // $pessoa pega o email do departamento
         $pessoa = DB::table('tab_pessoas as P')
         ->join('tab_departamentos as D', 'P.ID_DPTO','D.ID_DPTO')
         ->where('P.ID_DPTO', $dpto)
         ->select('P.EMAIL')
         ->get();
-        
+
+        $userid = $chamado->ID_USUARIO;
+        $idch = $chamado->ID_CHAMADO;
+        // $emailpessoa pega email do solicitante do chamado
+        $emailpessoa = DB::table('tab_usuarios as U')
+        ->join('tab_chamados as C', 'C.ID_USUARIO','U.ID_PESSOA' )
+        ->where('C.ID_USUARIO', $userid)
+        ->where('C.ID_CHAMADO', $idch)
+        ->select('U.EMAIL')
+        ->get();
+
+        //dd($copyemail);
         
         //Envia E-mail.
-         
         $data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
         $mail = [
             'nome'=>Arr::pluck($data,'USU_LOGIN')[0],
             'message'=> $request->interacao,
         ];
+
+        //pegando somente o email
+        $mailsolicitante = Arr::pluck($emailpessoa,'EMAIL')[0];
         $toemail = Arr::pluck($pessoa,'EMAIL');
         $copyemail = Arr::pluck($data,'EMAIL')[0];
        
        
             Mail::to($toemail)
-            ->cc($copyemail)
+            ->cc([$copyemail, $mailsolicitante])
             ->send(new SendMail($mail));
             
          if($save){
             Session::flash('success', true);
             return back()->with([
-                'success','Interação cadastrada com sucesso',
+                //'success','InteraÃ§Ã£o cadastrada com sucesso',
                 'data'=> Arr::pluck($data,'USU_LOGIN'),
                 'iduser'=>Arr::pluck($data,'ID_USUARIO'),
                 'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
@@ -501,9 +539,26 @@ class ChamadosController extends Controller
      */
     public function destroy($id)
     {
+        $reabre = new Tab_reabertura_chamado_logs;
         $chamado= Tab_chamados::findOrFail($id);
-        
-        $chamado->STATUS = 'F' ;
+              
+        $status = $chamado->STATUS;
+        $nmChamado = $chamado->NM_CHAMADO;
+        $idUsuario = $chamado->ID_USUARIO;
+       
+        if($status == 'F'){
+            $chamado->STATUS = 'E';
+
+            $reabre->NM_CHAMADO = $nmChamado;
+            $reabre->ID_USUARIO = $idUsuario;
+            $reabre->DATA_REABERTURA = date('Y-m-d H:i:s');
+
+            $reabre->save();
+
+        }else{
+            $chamado->STATUS = 'F';
+        }
+        //$chamado->STATUS = 'F' ;
         $chamado->DATA_ENCERRAMENTO = date('Y-m-d H:i:s');
         $inativado = $chamado->update();
         $data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
@@ -532,7 +587,7 @@ class ChamadosController extends Controller
              $chamado->PRIORIDADE = $request->prioridade ;
              
              // Verifica se o departamento do usuário é o mesmo do departamento que vai
-             // atender o chamado. Se os departamentos forem iguais, o campo "VIEW" será
+             // atender o chamado. Se os departamentos forem iguais, o campo "VIEW" será¡
              // atualizado pra "S" se não ele atualiza pra "N".
              
              if($dpto == $iddpto){
@@ -784,43 +839,40 @@ class ChamadosController extends Controller
     			->get();
     			
     			
-    			$depart = DB::table('tab_departamentos as d')
-    			->where('d.ID_DPTO',$dpto)
-    			->select('d.DESCRICAO')
-    			->groupby('d.DESCRICAO')->get();
-    			
-    			//dd( Arr::pluck($depart,'DESCRICAO')[0]);
-    			
-    				$setor = Arr::pluck($depart,'DESCRICAO')[0];
-    			
-    			
-    			
-    			
-    			$qtdDpto = DB::table('tab_chamados')->where('ID_DPTO',$dpto)->count();
-    			$qtdfechados = DB::table('tab_chamados')->where('STATUS','F')->where('ID_DPTO',$dpto)->count();
-    			$qtdEmAtendimento = DB::table('tab_chamados')->where('STATUS','E')->where('ID_DPTO',$dpto)->count();
-    			//dd($qtdChamados,$fechados,$emAtendimento);
-    			//dd(Arr::pluck($data,'ID_PESSOA'));
-    			return view('painel.graficos-demandas')->with([
-    					
-    					'abertosDpto'=>($qtdDpto),
-    					'qtdAbertos'=>($qtdAberto),
-    					'qtdFechados'=>($qtdfechados),
-    					'atendimento'=>($qtdEmAtendimento),
-    					'chamados'=>($chamados),
-    					'qtdChamados'=>($qtdAberto),
-    					'qtdUsuarios'=>($qtdUsuarios),
-    					'qtdSemAtendimmento'=>($qtdSemAtendimmento),
-    					'qtdEncerrados'=>($qtdEncerrados),
-    					'percente'=> number_format($percente, 2, ',', ''),
-    					'setor'=>$setor,
-    					'qtdEmAtendimento'=>($qtdEmAtendimento),
-    					'anoCorrente'=>$ano,
-    					'abertos'=>($abertos),// usa nos Graficos
-    					'fechados'=>($fechados),// usa nos Graficos
-    					'emAtendimento'=>($emAtendimento),// usa nos Graficos
-    					
-    			]);
+        $depart = DB::table('tab_departamentos as d')
+        ->where('d.ID_DPTO',$dpto)
+        ->select('d.DESCRICAO')
+        ->groupby('d.DESCRICAO')->get();
+        
+        //dd( Arr::pluck($depart,'DESCRICAO')[0]);
+        
+        $setor = Arr::pluck($depart,'DESCRICAO')[0];
+        
+        $qtdDpto = DB::table('tab_chamados')->where('ID_DPTO',$dpto)->count();
+        $qtdfechados = DB::table('tab_chamados')->where('STATUS','F')->where('ID_DPTO',$dpto)->count();
+        $qtdEmAtendimento = DB::table('tab_chamados')->where('STATUS','E')->where('ID_DPTO',$dpto)->count();
+        //dd($qtdChamados,$fechados,$emAtendimento);
+        //dd(Arr::pluck($data,'ID_PESSOA'));
+        return view('painel.graficos-demandas')->with([
+                
+                'abertosDpto'=>($qtdDpto),
+                'qtdAbertos'=>($qtdAberto),
+                'qtdFechados'=>($qtdfechados),
+                'atendimento'=>($qtdEmAtendimento),
+                'chamados'=>($chamados),
+                'qtdChamados'=>($qtdAberto),
+                'qtdUsuarios'=>($qtdUsuarios),
+                'qtdSemAtendimmento'=>($qtdSemAtendimmento),
+                'qtdEncerrados'=>($qtdEncerrados),
+                'percente'=> number_format($percente, 2, ',', ''),
+                'setor'=>$setor,
+                'qtdEmAtendimento'=>($qtdEmAtendimento),
+                'anoCorrente'=>$ano,
+                'abertos'=>($abertos),// usa nos Graficos
+                'fechados'=>($fechados),// usa nos Graficos
+                'emAtendimento'=>($emAtendimento),// usa nos Graficos
+                
+        ]);
     }
     
     public function pdfDescricao($idchamado){

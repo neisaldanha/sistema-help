@@ -28,6 +28,9 @@ class PessoasController extends Controller
     public function index()
     {
         $data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+        $id = Arr::pluck($data, 'ID_PESSOA')[0];
+        $fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+        $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
         $users = DB::table('tab_pessoas')->where('PESSOA_STATUS','A')->get();
         $nivel =  Arr::pluck($data,'USU_NIVEL')[0];
         //dd(Arr::pluck($data,'USU_NIVEL'));
@@ -40,7 +43,7 @@ class PessoasController extends Controller
         			'data'=> Arr::pluck($data,'USU_LOGIN'),
         			'iduser'=>Arr::pluck($data,'ID_USUARIO'),
         			'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-        			'imagem' =>Arr::pluck($data,'FOTO'),
+        			'imagem' => $foto,
         			'nivel'=>$nivel,
         			
         	]);
@@ -53,7 +56,7 @@ class PessoasController extends Controller
 	            'iduser'=> Arr::pluck($data,'ID_USUARIO'),
 	            'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
 	            'data'=>Arr::pluck($data,'USU_LOGIN'),
-	            'imagem' =>Arr::pluck($data,'FOTO'),
+	            'imagem' => $foto,
 	            'nivel'=>$nivel,
 	        ]);
         }
@@ -168,6 +171,9 @@ class PessoasController extends Controller
          $save = $pessoas->save();
          
          $data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+            $id = Arr::pluck($data, 'ID_PESSOA')[0];
+            $fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+            $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
          $nivel =  Arr::pluck($data,'USU_NIVEL')[0];
          if($save){
             Session::flash('success', true);
@@ -176,7 +182,7 @@ class PessoasController extends Controller
                 'data'=> Arr::pluck($data,'USU_LOGIN'),
                 'iduser'=>Arr::pluck($data,'ID_USUARIO'),
                 'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-                'imagem' =>Arr::pluck($data,'FOTO'),
+                'imagem' => $foto,
                 'nivel'=> $nivel,
                 ]);
          }else{
@@ -289,6 +295,9 @@ class PessoasController extends Controller
             
             $update = $pessoas->update();
             $data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+            $id = Arr::pluck($data, 'ID_PESSOA')[0];
+            $fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+            $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
             $nivel =  Arr::pluck($data,'USU_NIVEL')[0];
             if($update){
                 Session::flash('success', true);
@@ -297,7 +306,7 @@ class PessoasController extends Controller
                     'data'=> Arr::pluck($data,'USU_LOGIN'),
                     'iduser'=>Arr::pluck($data,'ID_USUARIO'),
                     'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-                    'imagem' =>Arr::pluck($data,'FOTO'),
+                    'imagem' => $foto,
                     'nivel'=>$nivel,
                 ]);
             }else{
@@ -320,6 +329,9 @@ class PessoasController extends Controller
     	
     
     	$data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+        $id = Arr::pluck($data, 'ID_PESSOA')[0];
+        $fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+        $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
     	$nivel =  Arr::pluck($data,'USU_NIVEL')[0];
     
     	if($nivel != 'A' ){
@@ -330,7 +342,7 @@ class PessoasController extends Controller
     				'data'=> Arr::pluck($data,'USU_LOGIN'),
     				'iduser'=>Arr::pluck($data,'ID_USUARIO'),
     				'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-    				'imagem' =>Arr::pluck($data,'FOTO'),
+    				'imagem' => $foto,
     				'nivel'=>$nivel,
     				
     		]);
@@ -340,6 +352,9 @@ class PessoasController extends Controller
 	        if($id==0){
 	           
 	            $data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+                $id = Arr::pluck($data, 'ID_PESSOA')[0];
+                $fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+                $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
 	            $dpto = DB::table('tab_departamentos')->select('ID_DPTO','DESCRICAO')->get();
 	            $funcoes = DB::table('tab_funcoes')->select('ID_FUNCAO','DESCRICAO')->get();
 	            
@@ -349,13 +364,16 @@ class PessoasController extends Controller
 	                'iduser'=>Arr::pluck($data,'ID_PESSOA'),
 	                'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
 	                 'data'=>Arr::pluck($data,'USU_LOGIN'),
-	                 'imagem' =>Arr::pluck($data,'FOTO'),
+	                 'imagem' => $foto,
 	                 'dptos'=> $dpto,
 	                 'funcoes'=> $funcoes,
 	                 'nivel'=>$nivel,
 	                 ]);
 	        }else{
-	          
+                $data = ['LoggedUserInfo' => tab_usuarios::where('ID_USUARIO', '=', session('LoggedUser'))->first()];
+                $id = Arr::pluck($data, 'ID_PESSOA')[0];
+                $fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+                $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
 	            $pessoas = DB::table('tab_pessoas')->get();
 	
 	            $qtdMneusChamados = DB::table('tab_chamados')->where('ID_USUARIO',$id)->count();
@@ -383,7 +401,7 @@ class PessoasController extends Controller
 	                'data'=>Arr::pluck($data,'USU_LOGIN'),
 	                'iduser'=> Arr::pluck($data,'ID_PESSOA'),
 	                'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-	                'imagem' =>Arr::pluck($data,'FOTO'),
+	                'imagem' =>$foto,
 	                'pessoas'=>$pessoas,
 	                'dptos'=> $dpto,
 	                'funcoes'=> $funcoes,
@@ -409,6 +427,10 @@ class PessoasController extends Controller
 
     	
     	$data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+        
+        $id = Arr::pluck($data, 'ID_PESSOA')[0];
+        $fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+        $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
     	$nivel =  Arr::pluck($data,'USU_NIVEL')[0];
     	
     	if($nivel != 'A' ){
@@ -419,7 +441,7 @@ class PessoasController extends Controller
     				'data'=> Arr::pluck($data,'USU_LOGIN'),
     				'iduser'=>Arr::pluck($data,'ID_USUARIO'),
     				'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-    				'imagem' =>Arr::pluck($data,'FOTO'),
+    				'imagem' =>$foto,
     				'nivel'=>$nivel,
     				
     		]);
@@ -428,6 +450,9 @@ class PessoasController extends Controller
 	        if($id){
 	            
 	            $data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+                $id = Arr::pluck($data, 'ID_PESSOA')[0];
+                $fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+                $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
 	            $pessoa = Tab_pessoas::findOrFail($id);
 	            
 	            $nivel =  Arr::pluck($data,'USU_NIVEL')[0];
@@ -436,20 +461,23 @@ class PessoasController extends Controller
 	                'data'=>Arr::pluck($data,'USU_LOGIN'),
 	                'iduser'=>Arr::pluck($data,'ID_USUARIO'),
 	                'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-	                'imagem' =>Arr::pluck($data,'FOTO'),
+	                'imagem' =>$foto,
 	                'nivel'=>$nivel,
 	
 	            ]);    
 	        }else{
 	                        
 	            $data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+                 $id = Arr::pluck($data, 'ID_PESSOA')[0];
+                $fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+                $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
 	            $pessoa = Tab_pessoas::findOrFail($id);
 	            return view('painel.edita-pessoa')->with([
 	                'pessoas' => (Object)($pessoa),
 	                'data'=>Arr::pluck($data,'USU_LOGIN'),
 	                'iduser'=>Arr::pluck($data,'ID_USUARIO'),
 	                'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-	                'imagem' =>Arr::pluck($data,'FOTO'),
+	                'imagem' =>$foto,
 	                'nivel'=>$nivel,
 	            ]);
 	            
@@ -479,6 +507,9 @@ class PessoasController extends Controller
     public function destroy($id)
     {
     	$data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+        $id = Arr::pluck($data, 'ID_PESSOA')[0];
+        $fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+        $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
     	$users = DB::table('tab_pessoas')->where('PESSOA_STATUS','A')->get();
     	$nivel =  Arr::pluck($data,'USU_NIVEL')[0];
     	//dd(Arr::pluck($data,'USU_NIVEL'));
@@ -491,7 +522,7 @@ class PessoasController extends Controller
     				'data'=> Arr::pluck($data,'USU_LOGIN'),
     				'iduser'=>Arr::pluck($data,'ID_USUARIO'),
     				'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-    				'imagem' =>Arr::pluck($data,'FOTO'),
+    				'imagem' =>$foto,
     				'nivel'=>$nivel,
     				
     		]);

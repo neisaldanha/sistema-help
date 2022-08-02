@@ -93,6 +93,7 @@ class UsuarioController extends Controller
         $dpto = Arr::pluck($data,'ID_DPTO')[0];
                 
         $chamados = DB::table('tab_chamados')->get();
+		
        
         $users = Tab_pessoas::get();
         $qtdChamados = DB::table('tab_chamados')->count();
@@ -164,7 +165,9 @@ class UsuarioController extends Controller
             $semAtendimento = $qtdMeusSemAtendimmento;
             
         }
-        
+		$fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+        $foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
+		//dd(Arr::pluck($foto, 'PESSOA_FOTO')[0]);
         $status = Arr::pluck($chamados,'STATUS');
         //dd($status);
         //dd(Arr::pluck($data,'ID_PESSOA'));
@@ -172,7 +175,7 @@ class UsuarioController extends Controller
             'data'=>Arr::pluck($data,'USU_LOGIN'),
             'iduser'=> Arr::pluck($data,'ID_USUARIO'),
             'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-            'imagem' =>Arr::pluck($data,'FOTO'),
+            'imagem' =>$foto,
             'qtdChamados'=>$qtd,
             'qtdUsuarios'=>$qtdUsuarios,
             'qtdSemAtendimmento'=>$semAtendimento,
@@ -217,7 +220,12 @@ class UsuarioController extends Controller
         ->where('U.USU_STATUS','A')
         ->select('P.PESSOA_NOME','P.ID_PESSOA', 'P.PESSOA_CPF', 'P.ID_DPTO','P.ID_FUNCAO','U.ID_USUARIO', 'U.USU_LOGIN', 'U.USU_NIVEL','P.PESSOA_FOTO','U.EMAIL')
         ->get();
+
         $data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+		$id = Arr::pluck($data, 'ID_PESSOA')[0];
+		$fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+		$foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
+		//dd(($foto));
         $nivel =  Arr::pluck($data,'USU_NIVEL')[0];
         if($nivel != 'A' ){
         	//abort(403,"Acesso não autorizado");
@@ -227,7 +235,7 @@ class UsuarioController extends Controller
         			'data'=> Arr::pluck($data,'USU_LOGIN'),
         			'iduser'=>Arr::pluck($data,'ID_USUARIO'),
         			'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-        			'imagem' =>Arr::pluck($data,'FOTO'),
+        			'imagem' => $foto,
         			'nivel'=>$nivel,
         			
         	]);
@@ -240,7 +248,7 @@ class UsuarioController extends Controller
 	            'data'=>Arr::pluck($data,'USU_LOGIN'),
 	            'iduser'=> Arr::pluck($data,'ID_USUARIO'),
 	            'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-	            'imagem' =>Arr::pluck($data,'FOTO'),
+	            'imagem' => $foto,
 	            'nivel'=>$nivel,
 	        ]);
         }
@@ -266,6 +274,11 @@ class UsuarioController extends Controller
     public function store(Request $request)
     {
     	$data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+
+		$id = Arr::pluck($data, 'ID_PESSOA')[0];
+		$fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+		$foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
+
     	$nivel =  Arr::pluck($data,'USU_NIVEL')[0];
     	if($nivel != 'A' ){
     		//abort(403,"Acesso não autorizado");
@@ -275,7 +288,7 @@ class UsuarioController extends Controller
     				'data'=> Arr::pluck($data,'USU_LOGIN'),
     				'iduser'=>Arr::pluck($data,'ID_USUARIO'),
     				'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-    				'imagem' =>Arr::pluck($data,'FOTO'),
+    				'imagem' => $foto,
     				'nivel'=>$nivel,
     				
     		]);
@@ -353,7 +366,7 @@ class UsuarioController extends Controller
 	                'data'=> Arr::pluck($data,'USU_LOGIN'),
 	                'iduser'=>Arr::pluck($data,'ID_USUARIO'),
 	                'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-	                'imagem' =>Arr::pluck($data,'FOTO'),
+	                'imagem' => $foto,
 	                'nivel'=>$nivel,
 	
 	                ]);
@@ -399,12 +412,22 @@ class UsuarioController extends Controller
 	            //Insert data into database
 	
 	            $id = $request->id;
+				$idpessoa = $request->pessoa;
+				//dd($idpessoa);
+				$pessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $idpessoa)->select('EMAIL','PESSOA_FOTO','ID_DPTO','PESSOA_CPF')->get();
+				$email = Arr::pluck($pessoa, 'EMAIL');
+				$dpto = Arr::pluck($pessoa, 'ID_DPTO');
+				$foto = Arr::pluck($pessoa, 'PESSOA_FOTO');
+				$cpf  = Arr::pluck($pessoa, 'PESSOA_CPF');
+
 	            $user = tab_usuarios::findOrFail($id);
-	            
-	            
+	              
 	            $user->USU_NIVEL = $request->tipo;
 	            $user->USU_LOGIN = $request->usuario;
 	            $user->SENHA = $request->password;
+	            $user->EMAIL = $email[0];
+				$user->ID_DPTO = $dpto[0];
+				$user->CPF = $cpf[0];
 	            $user->USU_DATA_UPDATE = date('Y-m-d H:i:s');
 	
 	            
@@ -421,7 +444,7 @@ class UsuarioController extends Controller
 	                    'data'=> Arr::pluck($data,'USU_LOGIN'),
 	                    'iduser'=>Arr::pluck($data,'ID_USUARIO'),
 	                    'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-	                    'imagem' =>Arr::pluck($data,'FOTO'),
+	                    'imagem' => $foto,
 	                    'nivel'=>$nivel,
 	                ]);
 	            }else{
@@ -443,6 +466,10 @@ class UsuarioController extends Controller
     public function show($id)
     {
     	$data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+		$id = Arr::pluck($data, 'ID_PESSOA')[0];
+		$fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+		$foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
+
     	$nivel =  Arr::pluck($data,'USU_NIVEL')[0];
     	if($nivel != 'A' ){
     		//abort(403,"Acesso não autorizado");
@@ -452,7 +479,7 @@ class UsuarioController extends Controller
     				'data'=> Arr::pluck($data,'USU_LOGIN'),
     				'iduser'=>Arr::pluck($data,'ID_USUARIO'),
     				'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-    				'imagem' =>Arr::pluck($data,'FOTO'),
+    				'imagem' =>$foto ,
     				'nivel'=>$nivel,
     				
     		]);
@@ -472,7 +499,7 @@ class UsuarioController extends Controller
 	                'data'=>Arr::pluck($data,'USU_LOGIN'),
 	                'iduser'=> Arr::pluck($data,'ID_USUARIO'),
 	                'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-	                'imagem' =>Arr::pluck($data,'FOTO'),
+	                'imagem' =>$foto ,
 	                'nivel'=>$nivel,
 	            ]);
 	        }else{
@@ -496,7 +523,7 @@ class UsuarioController extends Controller
 	                'data' => Arr::pluck($data,'USU_LOGIN'),
 	                'iduser'=>Arr::pluck($data,'ID_USUARIO'),
 	                'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-	                'imagem' =>Arr::pluck($data,'FOTO'),
+	                'imagem' =>$foto,
 	                'nivel'=> $nivel,
 	                ]);
 	        }
@@ -513,6 +540,9 @@ class UsuarioController extends Controller
     public function edit($id, Request $request)
     {
     	$data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+		$id = Arr::pluck($data, 'ID_PESSOA')[0];
+		$fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+		$foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
     	$nivel =  Arr::pluck($data,'USU_NIVEL')[0];
     	if($nivel != 'A' ){
     		//abort(403,"Acesso não autorizado");
@@ -522,7 +552,7 @@ class UsuarioController extends Controller
     				'data'=> Arr::pluck($data,'USU_LOGIN'),
     				'iduser'=>Arr::pluck($data,'ID_USUARIO'),
     				'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-    				'imagem' =>Arr::pluck($data,'FOTO'),
+    				'imagem' => $foto,
     				'nivel'=>$nivel,
     				
     		]);
@@ -570,7 +600,11 @@ class UsuarioController extends Controller
      */
     public function destroy($id)
     {
+		
     	$data = ['LoggedUserInfo'=>tab_usuarios::where('ID_USUARIO','=', session('LoggedUser'))->first()];
+		$id = Arr::pluck($data, 'ID_PESSOA')[0];
+		$fotoPessoa = DB::table('tab_pessoas')->where('ID_PESSOA', $id)->select('PESSOA_FOTO')->get();
+		$foto = Arr::pluck($fotoPessoa, 'PESSOA_FOTO');
     	$nivel =  Arr::pluck($data,'USU_NIVEL')[0];
     	if($nivel != 'A' ){
     		//abort(403,"Acesso não autorizado");
@@ -580,7 +614,7 @@ class UsuarioController extends Controller
     				'data'=> Arr::pluck($data,'USU_LOGIN'),
     				'iduser'=>Arr::pluck($data,'ID_USUARIO'),
     				'idpessoa'=>Arr::pluck($data,'ID_PESSOA'),
-    				'imagem' =>Arr::pluck($data,'FOTO'),
+    				'imagem' => $foto,
     				'nivel'=>$nivel,
     				
     		]);
